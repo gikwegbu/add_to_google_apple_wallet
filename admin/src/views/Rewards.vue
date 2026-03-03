@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import client from '../api/client';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5QrcodeScanner, Html5Qrcode } from 'html5-qrcode';
 import { 
   AwardIcon, 
   SettingsIcon, 
@@ -13,7 +13,9 @@ import {
 const userId = ref('');
 const points = ref(10);
 const logs = ref<any[]>([]);
-let scanner: Html5QrcodeScanner | null = null;
+const scanMode = ref<'camera' | 'upload'>('camera');
+const isCameraActive = ref(false);
+let html5QrCode: Html5Qrcode | null = null;
 
 const awardPoints = async () => {
     if (!userId.value) return;
@@ -41,7 +43,7 @@ const onScanSuccess = async (decodedText: string, decodedResult: any) => {
             id: Date.now(),
             type: 'Redemption',
             message: `Redeemed for user`,
-            user: res.data.id,
+            user: res.data.id || 'Unknown',
             time: new Date().toLocaleTimeString(),
             amount: `New bal: ${res.data.points}`,
             isCredit: false
@@ -52,19 +54,66 @@ const onScanSuccess = async (decodedText: string, decodedResult: any) => {
     }
 };
 
+const onFileChange = async (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  if (!input.files || input.files.length === 0) return;
+
+  const file = input.files[0];
+  if (!file) return;
+
+  const fileScanner = new Html5Qrcode("reader");
+  
+  try {
+    const decodedText = await fileScanner.scanFile(file, true);
+    await onScanSuccess(decodedText, null);
+  } catch (err) {
+    alert("Error scanning file: " + err);
+  } finally {
+    fileScanner.clear();
+  }
+};
+
+const startCamera = async () => {
+    if (!html5QrCode) {
+        html5QrCode = new Html5Qrcode("reader");
+    }
+    
+    try {
+        await html5QrCode.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: { width: 250, height: 250 } },
+            onScanSuccess,
+            (errorMessage) => { /* quiet error */ }
+        );
+        isCameraActive.value = true;
+    } catch (err) {
+        alert("Unable to start camera: " + err);
+    }
+};
+
+const stopCamera = async () => {
+    if (html5QrCode && isCameraActive.value) {
+        try {
+            await html5QrCode.stop();
+            isCameraActive.value = false;
+        } catch (err) {
+            console.error("Error stopping camera", err);
+        }
+    }
+};
+
+watch(scanMode, (newMode) => {
+    if (newMode === 'upload') {
+        stopCamera();
+    }
+});
+
 onMounted(() => {
-    scanner = new Html5QrcodeScanner(
-        "reader",
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        /* verbose= */ false
-    );
-    scanner.render(onScanSuccess, (error) => {});
+    // We don't auto-start here to ensure user interaction if needed
 });
 
 onUnmounted(() => {
-    if(scanner) {
-        scanner.clear();
-    }
+    stopCamera();
 });
 </script>
 
@@ -110,14 +159,74 @@ onUnmounted(() => {
         </div>
 
         <!-- Scanner -->
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6 relative">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative">
           <div class="absolute inset-0 bg-indigo-600/5 pointer-events-none"></div>
-          <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center relative">
-            <GiftIcon class="w-5 h-5 mr-2 text-indigo-600" />
-            Live Redemption
-          </h2>
-          <div id="reader" class="rounded-xl overflow-hidden border border-slate-200 bg-black shadow-inner"></div>
-          <p class="text-xs text-slate-400 text-center mt-4 italic ">Point the camera to a user digital pass QR code.</p>
+          <div class="p-6 pb-0">
+            <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center relative">
+              <GiftIcon class="w-5 h-5 mr-2 text-indigo-600" />
+              Live Redemption
+            </h2>
+            
+            <!-- Mode Switcher -->
+            <div class="flex p-1 bg-slate-100 rounded-xl mb-6 relative">
+              <button 
+                @click="scanMode = 'camera'"
+                :class="`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${scanMode === 'camera' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`"
+              >
+                Camera
+              </button>
+              <button 
+                @click="scanMode = 'upload'"
+                :class="`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${scanMode === 'upload' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`"
+              >
+                Upload Image
+              </button>
+            </div>
+          </div>
+
+          <div class="px-6 pb-6">
+            <div v-show="scanMode === 'camera'" class="space-y-4">
+              <div id="reader" class="rounded-xl overflow-hidden border border-slate-200 bg-slate-900 shadow-inner aspect-square relative flex items-center justify-center">
+                <div v-if="!isCameraActive" class="text-center p-6 space-y-4 relative z-10">
+                  <div class="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <CameraIcon class="w-8 h-8 text-white/40" />
+                  </div>
+                  <p class="text-sm text-white/60">Camera is currently inactive</p>
+                  <button 
+                    @click="startCamera" 
+                    class="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20 active:scale-95"
+                  >
+                    Enable Camera Access
+                  </button>
+                </div>
+              </div>
+              
+              <div v-if="isCameraActive" class="flex justify-center">
+                <button 
+                  @click="stopCamera" 
+                  class="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest"
+                >
+                  Stop Camera
+                </button>
+              </div>
+              
+              <p class="text-xs text-slate-400 text-center italic">Point the camera to a user digital pass QR code.</p>
+            </div>
+
+            <div v-if="scanMode === 'upload'" class="space-y-4">
+              <label class="group relative flex flex-col items-center justify-center w-full aspect-square border-2 border-dashed border-slate-200 rounded-2xl hover:border-indigo-400 hover:bg-indigo-50/30 transition-all cursor-pointer overflow-hidden">
+                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                  <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <CameraIcon class="w-6 h-6 text-indigo-600" />
+                  </div>
+                  <p class="text-sm font-bold text-slate-700">Drop QR image here</p>
+                  <p class="text-[10px] text-slate-400 mt-1 uppercase tracking-widest font-medium">or click to browse</p>
+                </div>
+                <input type="file" class="hidden" @change="onFileChange" accept="image/*" />
+              </label>
+              <p class="text-xs text-slate-400 text-center italic">Upload a screenshot or photo of the user's pass.</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -173,12 +282,7 @@ onUnmounted(() => {
 }
 #reader video {
   border-radius: 12px;
+  object-fit: cover !important;
 }
-#reader > div:first-child {
-  display: none;
-}
-button#html5-qrcode-button-camera-start,
-button#html5-qrcode-button-camera-stop {
-  @apply bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold mt-2 hover:bg-indigo-700 transition-all border-none block mx-auto;
-}
+/* Fixed: Removed restrictive display rules that were hiding permissions */
 </style>

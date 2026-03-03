@@ -29,7 +29,7 @@ export class RewardsService {
         });
 
         // Update passes
-        // await this.googleService.updatePass(updatedUser, { ... });
+        await this.googleService.updatePass(updatedUser, { textModulesData: [{ header: 'Points', body: updatedUser.points.toString(), id: 'points' }] });
 
         return updatedUser;
     }

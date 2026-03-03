@@ -10,15 +10,21 @@
 ---
 
 ## 1. Clone & Install
-
-git clone https://github.com/your-org/wallet-system.git
+```bash
+git clone https://github.com/gikwegbu/add_to_google_apple_wallet.git
 cd wallet-system
-
+```
 # Install core backend
+
+```bash
 cd core && npm install
+```
 
 # Install admin dashboard
+
+```bash
 cd ../admin && npm install
+```
 
 ---
 
@@ -49,8 +55,9 @@ cd ../admin && npm install
 ---
 
 ## 4. Environment File Setup
-
+```bash
 cp core/.env.example core/.env
+```
 
 Fill in all values:
 - DATABASE_URL → your PostgreSQL connection string
