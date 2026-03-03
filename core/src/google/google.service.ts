@@ -69,7 +69,7 @@ export class GoogleService implements OnModuleInit {
             cardTitle: {
                 defaultValue: {
                     language: 'en-US',
-                    value: 'Rewards Card',
+                    value: 'Reisty Gift Card',
                 },
             },
             header: {

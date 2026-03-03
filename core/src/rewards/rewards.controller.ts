@@ -6,8 +6,8 @@ export class RewardsController {
     constructor(private readonly rewardsService: RewardsService) { }
 
     @Post('redeem')
-    redeem(@Body('token') token: string) {
-        return this.rewardsService.redeem(token);
+    redeem(@Body() body: { token: string; points: number }) {
+        return this.rewardsService.redeem(body.token, body.points);
     }
 
     @Post('award')

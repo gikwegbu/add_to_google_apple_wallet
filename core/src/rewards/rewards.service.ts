@@ -11,19 +11,19 @@ export class RewardsService {
         private googleService: GoogleService,
     ) { }
 
-    async redeem(token: string) {
+    async redeem(token: string, points: number) {
         const userId = this.qrService.validateToken(token);
 
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
         if (!user) throw new BadRequestException('User not found');
-        if (user.points < 10) throw new BadRequestException('Insufficient points');
+        if (user.points < points) throw new BadRequestException(`Insufficient points (needed ${points})`);
 
         const updatedUser = await this.prisma.user.update({
             where: { id: userId },
             data: {
-                points: { decrement: 10 },
+                points: { decrement: points },
                 redemptions: {
-                    create: { points: 10 }
+                    create: { points: points }
                 }
             }
         });

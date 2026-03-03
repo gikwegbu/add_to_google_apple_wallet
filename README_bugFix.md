@@ -147,7 +147,7 @@ PATCH /walletobjects/v1/genericObject/{objectId}
 Generic objects also require `cardTitle` and `header` fields:
 ```ts
 cardTitle: {
-  defaultValue: { language: 'en-US', value: 'Rewards Card' },
+  defaultValue: { language: 'en-US', value: 'Reisty Gift Card' },
 },
 header: {
   defaultValue: { language: 'en-US', value: user.name || 'Member' },

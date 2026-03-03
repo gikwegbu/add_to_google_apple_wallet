@@ -12,6 +12,7 @@ import {
 
 const userId = ref('');
 const points = ref(10);
+const redemptionPoints = ref(10);
 const logs = ref<any[]>([]);
 const scanMode = ref<'camera' | 'upload'>('camera');
 const isCameraActive = ref(false);
@@ -38,7 +39,10 @@ const awardPoints = async () => {
 
 const onScanSuccess = async (decodedText: string, decodedResult: any) => {
     try {
-        const res = await client.post('/rewards/redeem', { token: decodedText });
+        const res = await client.post('/rewards/redeem', { 
+            token: decodedText,
+            points: redemptionPoints.value 
+        });
         logs.value.unshift({
             id: Date.now(),
             type: 'Redemption',
@@ -181,6 +185,11 @@ onUnmounted(() => {
               >
                 Upload Image
               </button>
+            </div>
+
+            <div class="space-y-1.5 mb-6">
+              <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Redemption Cost (Points)</label>
+              <input v-model.number="redemptionPoints" type="number" class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all" />
             </div>
           </div>
 
