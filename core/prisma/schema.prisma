@@ -1,0 +1,51 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  fullname      String?
+  googlePassId  String?
+  applePassId   String?
+  points        Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  redemptions   Redemption[]
+}
+
+model TicketConfig {
+  id             String   @id @default(uuid())
+  eventName      String
+  description    String
+  imageUrl       String
+  logoUrl        String
+  backgroundColor String
+  foregroundColor String
+  totalQuantity  Int
+  usedQuantity   Int      @default(0)
+  expirationDate DateTime
+  eventDate      DateTime
+  eventLocation  String
+  barcodeFormat  String
+  metadata       Json
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Redemption {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  points    Int      @default(10)
+  scannedAt DateTime @default(now())
+}
