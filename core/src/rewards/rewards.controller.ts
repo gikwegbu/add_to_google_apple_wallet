@@ -10,8 +10,14 @@ export class RewardsController {
         return this.rewardsService.redeem(body.token, body.points);
     }
 
+    @Get('transactions')
+    getTransactions() {
+        return this.rewardsService.getTransactions();
+    }
+
     @Post('award')
     award(@Body() body: { userId: string; points: number }) {
+        // userId here can be email or plain UUID
         return this.rewardsService.award(body.userId, body.points);
     }
 }

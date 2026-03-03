@@ -8,55 +8,54 @@ import {
   UserIcon, 
   GiftIcon,
   ChevronRightIcon,
-  CameraIcon
+  CameraIcon,
+  SearchIcon
 } from '../components/icons/LucideIcons';
+import { computed } from 'vue';
 
 const userId = ref('');
 const points = ref(10);
 const redemptionPoints = ref(10);
 const logs = ref<any[]>([]);
+const searchQuery = ref('');
 const scanMode = ref<'camera' | 'upload'>('camera');
 const isCameraActive = ref(false);
 let html5QrCode: Html5Qrcode | null = null;
+
+const fetchTransactions = async () => {
+    try {
+        const res = await client.get('/rewards/transactions');
+        logs.value = res.data;
+    } catch (e) {
+        console.error('Failed to fetch transactions', e);
+    }
+};
 
 const awardPoints = async () => {
     if (!userId.value) return;
     try {
         await client.post('/rewards/award', { userId: userId.value, points: points.value });
         console.log('Manual Credit successful');
-        logs.value.unshift({
-            id: Date.now(),
-            type: 'Credit',
-            message: `Awarded ${points.value} points to`,
-            user: userId.value,
-            time: new Date().toLocaleTimeString(),
-            amount: `+${points.value}`,
-            isCredit: true
-        });
-        console.log('Logs updated:', logs.value);
+        await fetchTransactions();
         userId.value = '';
-    } catch(e) {
-        alert('Failed to award points');
+    } catch(e: any) {
+        alert('Failed to award points: ' + (e.response?.data?.message || e.message));
     }
 };
 
 const onScanSuccess = async (decodedText: string, decodedResult: any) => {
+    // Auto-stop camera on success
+    if (isCameraActive.value) {
+        await stopCamera();
+    }
+
     try {
         const res = await client.post('/rewards/redeem', { 
             token: decodedText,
             points: redemptionPoints.value 
         });
         console.log('Redemption response:', res.data);
-        logs.value.unshift({
-            id: Date.now(),
-            type: 'Redemption',
-            message: `Redeemed for user`,
-            user: res.data.id || 'Unknown',
-            time: new Date().toLocaleTimeString(),
-            amount: `New bal: ${res.data.points}`,
-            isCredit: false
-        });
-        console.log('Logs updated after scan:', logs.value);
+        await fetchTransactions();
         alert(`Redemption successful! New balance: ${res.data.points}`);
     } catch (e: any) {
         alert('Redemption failed: ' + (e.response?.data?.message || e.message));
@@ -111,6 +110,16 @@ const stopCamera = async () => {
     }
 };
 
+const filteredLogs = computed(() => {
+    if (!searchQuery.value) return logs.value;
+    const query = searchQuery.value.toLowerCase();
+    return logs.value.filter(log => 
+        log.user?.fullname?.toLowerCase().includes(query) ||
+        log.user?.email?.toLowerCase().includes(query) ||
+        log.userId?.toLowerCase().includes(query)
+    );
+});
+
 watch(scanMode, (newMode) => {
     if (newMode === 'upload') {
         stopCamera();
@@ -118,7 +127,7 @@ watch(scanMode, (newMode) => {
 });
 
 onMounted(() => {
-    // We don't auto-start here to ensure user interaction if needed
+    fetchTransactions();
 });
 
 onUnmounted(() => {
@@ -145,10 +154,10 @@ onUnmounted(() => {
           </h2>
           <div class="space-y-4">
             <div class="space-y-1.5">
-              <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">User UUID</label>
+              <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">User Email or UUID</label>
               <div class="relative">
                 <UserIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input v-model="userId" placeholder="Paste user ID..." class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:ring-2 focus:ring-amber-500/20 focus:outline-none transition-all" />
+                <input v-model="userId" placeholder="Enter email or UUID..." class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:ring-2 focus:ring-amber-500/20 focus:outline-none transition-all" />
               </div>
             </div>
             <div class="space-y-1.5">
@@ -246,12 +255,21 @@ onUnmounted(() => {
 
       <!-- Transaction Logs -->
       <div class="xl:col-span-8 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full min-h-[600px]">
-        <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-          <h2 class="font-bold text-slate-900 flex items-center uppercase tracking-wider text-xs">
+        <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <h2 class="font-bold text-slate-900 flex items-center uppercase tracking-wider text-xs whitespace-nowrap">
             <span class="w-2 h-2 rounded-full bg-indigo-500 mr-2"></span>
             Transaction History
           </h2>
-          <button @click="logs = []" class="text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest">Clear History</button>
+          <div class="relative w-full sm:w-64">
+            <SearchIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
+            <input 
+              v-model="searchQuery"
+              type="text" 
+              placeholder="Search by name, email or ID..." 
+              class="w-full pl-8 pr-4 py-1.5 bg-white border border-slate-200 rounded-lg text-[10px] focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all"
+            />
+          </div>
+          <button @click="fetchTransactions" class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 uppercase tracking-widest whitespace-nowrap">Refresh</button>
         </div>
         
         <div class="flex-1 overflow-y-auto">
@@ -263,22 +281,31 @@ onUnmounted(() => {
             <p class="text-slate-300 text-xs mt-1">Completed scans and manual awards will appear here.</p>
           </div>
           <div v-else class="divide-y divide-slate-100">
-            <div v-for="log in logs" :key="log.id" class="p-6 flex items-center hover:bg-slate-50/50 transition-colors">
-              <div :class="`w-10 h-10 rounded-xl flex items-center justify-center mr-4 ${log.isCredit ? 'bg-amber-100 text-amber-600' : 'bg-indigo-100 text-indigo-600'}`">
-                <AwardIcon v-if="log.isCredit" class="w-5 h-5" />
+            <div v-for="log in filteredLogs" :key="log.id" class="p-6 flex items-center hover:bg-slate-50/50 transition-colors">
+              <div :class="`w-10 h-10 rounded-xl flex items-center justify-center mr-4 ${log.type === 'CREDIT' ? 'bg-amber-100 text-amber-600' : 'bg-indigo-100 text-indigo-600'}`">
+                <AwardIcon v-if="log.type === 'CREDIT'" class="w-5 h-5" />
                 <GiftIcon v-else class="w-5 h-5" />
               </div>
-              <div class="flex-1">
-                <p class="text-sm font-bold text-slate-900">{{ log.type }}</p>
-                <p class="text-[10px] font-mono text-slate-400 mt-0.5">{{ log.user }}</p>
+              <div class="flex-1 min-w-0 mr-4">
+                <div class="flex items-center gap-2">
+                  <p class="text-sm font-bold text-slate-900 truncate">{{ log.user?.fullname || 'Unknown User' }}</p>
+                  <span :class="`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${log.type === 'CREDIT' ? 'bg-amber-50 text-amber-600' : 'bg-indigo-50 text-indigo-600'}`">{{ log.type }}</span>
+                </div>
+                <div class="flex flex-col sm:flex-row sm:items-center sm:gap-2 mt-0.5">
+                  <p class="text-[10px] text-slate-500 truncate">{{ log.user?.email }}</p>
+                  <span class="hidden sm:inline text-slate-300">•</span>
+                  <p class="text-[10px] font-mono text-slate-400 truncate">{{ log.userId }}</p>
+                </div>
               </div>
-              <div class="text-right">
-                <p :class="`text-sm font-bold ${log.isCredit ? 'text-amber-600' : 'text-indigo-600'}`">{{ log.amount }}</p>
-                <p class="text-[10px] text-slate-400 mt-0.5 uppercase">{{ log.time }}</p>
+              <div class="text-right whitespace-nowrap">
+                <p :class="`text-sm font-bold ${log.type === 'CREDIT' ? 'text-amber-600' : 'text-indigo-600'}`">
+                  {{ log.type === 'CREDIT' ? '+' : '-' }}{{ log.points }}
+                </p>
+                <p class="text-[10px] text-slate-400 mt-0.5 uppercase">{{ new Date(log.createdAt).toLocaleString() }}</p>
               </div>
-              <button class="ml-6 flex items-center justify-center w-8 h-8 text-slate-300 hover:text-slate-600 transition-colors">
-                <ChevronRightIcon class="w-4 h-4" />
-              </button>
+            </div>
+            <div v-if="filteredLogs.length === 0" class="p-12 text-center text-slate-400 text-sm italic">
+              No results match your search.
             </div>
           </div>
         </div>

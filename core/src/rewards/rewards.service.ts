@@ -11,6 +11,31 @@ export class RewardsService {
         private googleService: GoogleService,
     ) { }
 
+    async findUserByIdentifier(identifier: string) {
+        // Try UUID first
+        let user = await this.prisma.user.findUnique({ where: { id: identifier } });
+        if (!user) {
+            // Try Email
+            user = await this.prisma.user.findUnique({ where: { email: identifier } });
+        }
+        return user;
+    }
+
+    async getTransactions() {
+        return this.prisma.transaction.findMany({
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        fullname: true,
+                        email: true
+                    }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+    }
+
     async redeem(token: string, points: number) {
         const userId = this.qrService.validateToken(token);
 
@@ -22,8 +47,11 @@ export class RewardsService {
             where: { id: userId },
             data: {
                 points: { decrement: points },
-                redemptions: {
-                    create: { points: points }
+                transactions: {
+                    create: {
+                        points: points,
+                        type: 'REDEMPTION'
+                    }
                 }
             }
         });
@@ -34,10 +62,21 @@ export class RewardsService {
         return updatedUser;
     }
 
-    async award(userId: string, points: number) {
+    async award(identifier: string, points: number) {
+        const user = await this.findUserByIdentifier(identifier);
+        if (!user) throw new BadRequestException('User not found');
+
         return this.prisma.user.update({
-            where: { id: userId },
-            data: { points: { increment: points } }
+            where: { id: user.id },
+            data: {
+                points: { increment: points },
+                transactions: {
+                    create: {
+                        points: points,
+                        type: 'CREDIT'
+                    }
+                }
+            }
         });
     }
 }

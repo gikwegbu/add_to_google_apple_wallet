@@ -103,6 +103,14 @@ Never commit .env or any PEM/JSON credential files to version control.
 
 ---
 
+## Features
+- 🎨 **Modern Admin UI**: Responsive, premium dashboard built with Vue.js and Tailwind CSS.
+- 📱 **Digital Wallet Integration**: Support for Google Wallet (and Apple Wallet hooks) for digital passes.
+- 📸 **Smart Scanning**: Dual-mode QR scanner (Camera + Image Upload) with automatic camera lifecycle management.
+- 💰 **Rewards System**: Dynamic point deduction and manual credit with Email/UUID support.
+- 🏛️ **Transaction Persistence**: Complete, searchable history of all point transactions stored in a robust database.
+- 👥 **User Management**: Quick registration and management of users with instant pass generation.
+
 ## 6. Run Locally
 
 # Backend

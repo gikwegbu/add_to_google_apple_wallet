@@ -38,3 +38,4 @@ export const CalendarIcon = createIcon('rect width="18" height="18" x="3" y="4" 
 export const MapPinIcon = createIcon('M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z');
 export const CameraIcon = createIcon('path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"');
 export const UserIcon = createIcon('M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 0 1 0-8 4 4 0 0 1 0 8z');
+export const CopyIcon = createIcon('M9 15h-2a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2m-6 10h8a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2z');

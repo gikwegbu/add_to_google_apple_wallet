@@ -8,7 +8,8 @@ import {
   MailIcon, 
   AwardIcon, 
   MoreVerticalIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  CopyIcon
 } from '../components/icons/LucideIcons';
 
 const users = ref<any[]>([]);
@@ -53,6 +54,11 @@ const deleteUser = async (id: string) => {
         alert('Failed to delete user');
     }
 }
+
+const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    // Simple feedback could be added here
+};
 
 const filteredUsers = computed(() => {
     if (!searchQuery.value) return users.value;
@@ -186,6 +192,9 @@ onMounted(fetchUsers);
               </td>
               <td class="px-6 py-4 text-right">
                 <div class="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button @click="copyToClipboard(user.email)" title="Copy Email" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                    <CopyIcon class="w-4 h-4" />
+                  </button>
                   <button @click="deleteUser(user.id)" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                     <Trash2Icon class="w-4 h-4" />
                   </button>
