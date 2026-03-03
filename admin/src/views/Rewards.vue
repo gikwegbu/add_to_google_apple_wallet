@@ -7,7 +7,8 @@ import {
   SettingsIcon, 
   UserIcon, 
   GiftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  CameraIcon
 } from '../components/icons/LucideIcons';
 
 const userId = ref('');
@@ -22,6 +23,7 @@ const awardPoints = async () => {
     if (!userId.value) return;
     try {
         await client.post('/rewards/award', { userId: userId.value, points: points.value });
+        console.log('Manual Credit successful');
         logs.value.unshift({
             id: Date.now(),
             type: 'Credit',
@@ -31,6 +33,7 @@ const awardPoints = async () => {
             amount: `+${points.value}`,
             isCredit: true
         });
+        console.log('Logs updated:', logs.value);
         userId.value = '';
     } catch(e) {
         alert('Failed to award points');
@@ -43,6 +46,7 @@ const onScanSuccess = async (decodedText: string, decodedResult: any) => {
             token: decodedText,
             points: redemptionPoints.value 
         });
+        console.log('Redemption response:', res.data);
         logs.value.unshift({
             id: Date.now(),
             type: 'Redemption',
@@ -52,6 +56,7 @@ const onScanSuccess = async (decodedText: string, decodedResult: any) => {
             amount: `New bal: ${res.data.points}`,
             isCredit: false
         });
+        console.log('Logs updated after scan:', logs.value);
         alert(`Redemption successful! New balance: ${res.data.points}`);
     } catch (e: any) {
         alert('Redemption failed: ' + (e.response?.data?.message || e.message));

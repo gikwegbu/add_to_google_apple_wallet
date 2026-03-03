@@ -2,6 +2,7 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as jwt from 'jsonwebtoken';
 import { GoogleAuth } from 'google-auth-library';
+import { QrService } from '../qr/qr.service';
 
 @Injectable()
 export class GoogleService implements OnModuleInit {
@@ -12,7 +13,10 @@ export class GoogleService implements OnModuleInit {
     private credentialsPath: string;
     private auth: GoogleAuth;
 
-    constructor(private configService: ConfigService) {
+    constructor(
+        private configService: ConfigService,
+        private qrService: QrService,
+    ) {
         this.issuerId = this.configService.get<string>('google.issuerId') || '';
         this.classId = this.configService.get<string>('google.classId') || '';
         this.serviceAccountEmail = this.configService.get<string>('google.serviceAccountEmail') || '';
@@ -96,7 +100,7 @@ export class GoogleService implements OnModuleInit {
             },
             barcode: {
                 type: 'QR_CODE',
-                value: user.id,
+                value: this.qrService.generateToken(user.id),
                 alternateText: user.id,
             },
         };

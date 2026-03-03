@@ -19,6 +19,11 @@ export class QrService {
             const decoded = jwt.verify(token, this.secret) as any;
             return decoded.sub;
         } catch (e) {
+            // Fallback: If it's a valid UUID, treat it as a plain User ID (for legacy passes)
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+            if (uuidRegex.test(token)) {
+                return token;
+            }
             throw new UnauthorizedException('Invalid QR Token');
         }
     }
