@@ -33,6 +33,7 @@ cd ../admin && npm install
 1. Go to Google Cloud Console → Enable "Google Wallet API"
 2. Create a Service Account → download JSON key → rename to `service-account.json`
 3. Place `service-account.json` inside `core/`
+
 4. Go to Google Pay & Wallet Console → Register as an issuer
 5. Note your Issuer ID and create a Pass Class — note the Class ID
 6. Grant your service account the "Google Wallet Object Issuer" role
@@ -43,14 +44,54 @@ cd ../admin && npm install
 
 1. Log in to Apple Developer Portal
 2. Create a Pass Type ID under Identifiers (e.g. pass.com.yourcompany.wallet)
-3. Generate a Pass Certificate for that Pass Type ID — download the .p12 file
-4. Convert to PEM:
-   openssl pkcs12 -in certificate.p12 -clcerts -nokeys -out passcertificate.pem
-   openssl pkcs12 -in certificate.p12 -nocerts -out passkey.pem
-5. Download Apple WWDR certificate from https://www.apple.com/certificateauthority/
-   Rename to wwdr.pem
-6. Place all three PEM files in `apple/certs/`
-7. For push notifications (APNs), create an APNs key in Developer Portal — note Key ID
+3. Generate a Pass Certificate for that Pass Type ID — download the `pass.cer` file
+4. Double click on the `pass.cer` to open it in `keychains` then export it as `pass.p12`
+
+    ###
+        NB: From Step 4, you will be asked to enter a password to export the certificate. This is the `APPLE_CERT_PASSPHRASE` environment variable.
+
+        Furthermore, make sure the .cer file is in the login default keychain and not in the System keychain, as it won't allow you export it as a .p12 file (It'll literally grey it out).
+
+        Best option, copy the .cer file to the login default keychain and then export it as a .p12 file.
+
+5. Convert to PEM:
+    ```bash
+    openssl pkcs12 -in pass.p12 -clcerts -nokeys -out passcertificate.pem
+    openssl pkcs12 -in pass.p12 -nocerts -out passkey.pem
+    ```
+
+    ###
+        NB: Navigate to the directory where you exported the .p12 file in your terminal before running the commands in Step 5. That way, the PEM files will be created in the same directory. Then copy after running the command, copy the `passcertificate.pem` and `passkey.pem` files to the `core/apple/certs/` directory.
+        
+        From Step 5, you will be asked to enter a password to export the certificate. This is the `APPLE_CERT_PASSPHRASE` environment variable.
+
+        Enter the same password you used to export the .p12 file. Or if you didn't set one, just press enter.
+
+6. Verify the PEM files
+    ```bash
+    openssl x509 -in passcertificate.pem -noout -text | grep "Subject"
+    openssl rsa -in passkey.pem -noout -text | grep "Private"
+    ```
+
+7. Download Apple World Wide Developer Relations G4 Certificate from https://www.apple.com/certificateauthority/
+   Convert to .pem and save as `wwdr.pem`. This is your pass signing certificate.
+
+    ```bash
+    openssl x509 -inform DER -in AppleWWDRCAG4.cer -out wwdr.pem
+    ```
+
+    ###
+        NB: Navigate to the directory where you downloaded the `AppleWWDRCAG4.cer` file in your terminal before running the command in Step 7. That way, the PEM file will be created in the same directory. Then copy after running the command, copy the `wwdr.pem` file to the `core/apple/certs/` directory.
+
+8. Place all three PEM files in `apple/certs/`
+9. For push notifications (APNs), create an APNs key in Developer Portal — note Key ID
+    ###
+        1. Go to Apple Developer Portal → Certificates, Identifiers & Profiles
+        2. Click Keys (left sidebar)
+        3. Click + to create a new key
+        4. Give it a name and check Apple Push Notifications service (APNs)
+        5. Click Continue → Register → Download the .p8 file
+        6. Note down the Key ID (a 10-character string like ABC1234DEF)
 
 ---
 

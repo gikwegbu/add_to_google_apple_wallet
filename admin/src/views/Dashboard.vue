@@ -17,22 +17,38 @@ const stats = ref({
   isTicketActive: false
 });
 
-const recentActivity = ref([
-  { id: 1, type: 'User Joined', user: 'alex@example.com', time: '2 mins ago', status: 'success' },
-  { id: 2, type: 'Pass Issued', user: 'sarah@example.com', time: '15 mins ago', status: 'info' },
-  { id: 3, type: 'Points Scanned', user: 'mike@example.com', time: '1 hour ago', status: 'warning' },
-]);
+const recentActivity = ref<any[]>([]);
+
+function timeAgo(date: string | Date) {
+  const now = new Date();
+  const diff = now.getTime() - new Date(date).getTime();
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) return `${days}d ago`;
+  if (hours > 0) return `${hours}h ago`;
+  if (minutes > 0) return `${minutes}m ago`;
+  return 'just now';
+}
 
 onMounted(async () => {
   try {
-    const usersRes = await client.get('/users');
+    const [usersRes, ticketRes, activityRes] = await Promise.all([
+      client.get('/users'),
+      client.get('/tickets/config'),
+      client.get('/dashboard/activity')
+    ]);
+
     stats.value.users = usersRes.data.length;
     
-    const ticketRes = await client.get('/tickets/config');
     if (ticketRes.data) {
       stats.value.activeTicket = ticketRes.data.eventName;
       stats.value.isTicketActive = ticketRes.data.isActive;
     }
+
+    recentActivity.value = activityRes.data;
   } catch (e) {
     console.error(e);
   }
@@ -117,10 +133,13 @@ onMounted(async () => {
             </div>
             <div class="flex-1">
               <p class="font-bold text-slate-900">{{ item.type }}</p>
-              <p class="text-slate-500 text-xs mt-0.5">{{ item.user }}</p>
+              <p class="text-slate-500 text-xs mt-0.5">
+                {{ item.user }}
+                <span v-if="item.points" class="ml-1 text-slate-400">• {{ item.points }} pts</span>
+              </p>
             </div>
             <div class="text-right">
-              <p class="text-slate-400 text-xs">{{ item.time }}</p>
+              <p class="text-slate-400 text-xs">{{ timeAgo(item.time) }}</p>
             </div>
           </div>
         </div>

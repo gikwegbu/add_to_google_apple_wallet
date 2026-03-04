@@ -11,6 +11,7 @@ import { QrModule } from './qr/qr.module';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { envConfig } from './config/env.config';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -24,7 +25,8 @@ import { envConfig } from './config/env.config';
     UsersModule,
     TicketsModule,
     RewardsModule,
-    QrModule
+    QrModule,
+    DashboardModule
   ],
   controllers: [AppController],
   providers: [AppService],
