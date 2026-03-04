@@ -1,0 +1,48 @@
+{
+    "formatVersion": 1,
+    "passTypeIdentifier": "pass.com.gikwegbu.wallet",
+    "serialNumber": "GENERIC_SERIAL",
+    "teamIdentifier": "NXQNVCYXQ2",
+    "organizationName": "IkwegbuGeorge",
+    "description": "Electronic Ticket & Rewards Pass",
+    "logoText": "IkwegbuGeorge",
+    "foregroundColor": "rgb(255, 255, 255)",
+    "backgroundColor": "rgb(0, 0, 0)",
+    "generic": {
+        "primaryFields": [
+            {
+                "key": "event",
+                "label": "EVENT",
+                "value": "Demo Event"
+            }
+        ],
+        "secondaryFields": [
+            {
+                "key": "customerName",
+                "label": "CUSTOMER",
+                "value": "Member"
+            }
+        ],
+        "auxiliaryFields": [
+            {
+                "key": "points",
+                "label": "REWARD POINTS",
+                "value": "0"
+            }
+        ],
+        "backFields": [
+            {
+                "key": "terms",
+                "label": "TERMS & CONDITIONS",
+                "value": "This pass is non-transferable and subject to terms."
+            }
+        ]
+    },
+    "barcodes": [
+        {
+            "message": "GENERIC_DATA",
+            "format": "PKBarcodeFormatQR",
+            "messageEncoding": "iso-8859-1"
+        }
+    ]
+}

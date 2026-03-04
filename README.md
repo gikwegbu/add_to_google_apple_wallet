@@ -56,8 +56,11 @@ cd ../admin && npm install
 
 5. Convert to PEM:
     ```bash
+    #Extract the certificate (unencrypted)
     openssl pkcs12 -in pass.p12 -clcerts -nokeys -out passcertificate.pem
-    openssl pkcs12 -in pass.p12 -nocerts -out passkey.pem
+
+    #Extract the private key (unencrypted)
+    openssl pkcs12 -in pass.p12 -nocerts -nodes -out passkey.pem
     ```
 
     ###
