@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as jwt from 'jsonwebtoken';
+import * as fs from 'fs';
 import { GoogleAuth } from 'google-auth-library';
 import { QrService } from '../qr/qr.service';
 
@@ -11,6 +12,7 @@ export class GoogleService implements OnModuleInit {
     private serviceAccountEmail: string;
     private privateKey: string;
     private credentialsPath: string;
+    private credentials: any;
     private auth: GoogleAuth;
 
     constructor(
@@ -23,17 +25,49 @@ export class GoogleService implements OnModuleInit {
         this.privateKey = this.configService.get<string>('google.privateKey')?.replace(/\\n/g, '\n') || '';
         this.credentialsPath = this.configService.get<string>('google.credentialsPath') || '';
 
+        if (!this.issuerId || !this.classId) {
+            console.warn('⚠️ Google Wallet configuration (issuerId or classId) is missing. Some features may be disabled.');
+        }
+
+        let keyFile;
+        if (this.credentialsPath.trim().startsWith('{')) {
+            try {
+                this.credentials = JSON.parse(this.credentialsPath);
+            } catch (e) {
+                console.error('❌ Failed to parse GOOGLE_APPLICATION_CREDENTIALS as JSON');
+            }
+        } else {
+            keyFile = this.credentialsPath;
+            try {
+                if (fs.existsSync(keyFile)) {
+                    this.credentials = JSON.parse(fs.readFileSync(keyFile, 'utf8'));
+                }
+            } catch (e) {
+                console.error('❌ Failed to load Google credentials from file:', keyFile);
+            }
+        }
+
         this.auth = new GoogleAuth({
-            keyFile: this.credentialsPath,
+            keyFile: keyFile,
+            credentials: this.credentials,
             scopes: ['https://www.googleapis.com/auth/wallet_object.issuer'],
         });
     }
 
     async onModuleInit() {
-        await this.createGenericClass();
+        try {
+            await this.createGenericClass();
+        } catch (error) {
+            console.warn('⚠️ Google Wallet generic class initialization skipped (missing credentials or invalid setup).');
+        }
     }
 
     async createGenericClass() {
+        if (!this.classId) {
+            console.warn('⚠️ Google Wallet classId is missing. Skipping class creation.');
+            return;
+        }
+
         const client = await this.auth.getClient();
         const baseUrl = 'https://walletobjects.googleapis.com/walletobjects/v1';
 
@@ -60,8 +94,11 @@ export class GoogleService implements OnModuleInit {
     }
 
     async createPass(user: any, ticketConfig: any) {
+        if (!this.credentials) {
+            throw new Error('Google Wallet credentials not loaded');
+        }
         const objectId = `${this.issuerId}.${user.id}`;
-        const cred = require(this.credentialsPath);
+        const cred = this.credentials;
 
         const passObject = {
             id: objectId,
@@ -110,7 +147,8 @@ export class GoogleService implements OnModuleInit {
             aud: 'google',
             typ: 'savetowallet',
             iat: Math.floor(Date.now() / 1000),
-            origins: ['http://localhost:3000'],
+            // origins: ['http://localhost:3000'],
+            origins: [this.configService.get<string>('API_BASE_URL'), 'http://localhost:3000'],
             payload: {
                 genericObjects: [passObject], // ✅ was loyaltyObjects
             },
