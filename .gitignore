@@ -6,6 +6,8 @@
 # Certificates
 apple/certs/*.pem
 apple/certs/*.p12
+core/apple/certs/*.pem
+core/apple/certs/*.p12
 
 # Service account
 core/service-account.json

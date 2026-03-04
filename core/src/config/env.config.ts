@@ -1,6 +1,7 @@
 
 export const envConfig = () => ({
     port: parseInt(process.env.PORT || '3000', 10),
+    API_BASE_URL: process.env.API_BASE_URL,
     database: {
         url: process.env.DATABASE_URL,
     },
