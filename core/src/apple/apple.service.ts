@@ -17,10 +17,15 @@ export class AppleService {
     }
 
     async onModuleInit() {
-        const rootDir = path.resolve(process.cwd(), '..');
-        const certPath = path.resolve(rootDir, this.configService.get<string>('apple.certPath') || '');
-        const keyPath = path.resolve(rootDir, this.configService.get<string>('apple.keyPath') || '');
-        const wwdrPath = path.resolve(rootDir, this.configService.get<string>('apple.wwdrPath') || '');
+        // Try current dir first (production/docker), then parent dir (local dev)
+        let rootDir = process.cwd();
+        if (!fs.existsSync(path.resolve(rootDir, 'apple')) && fs.existsSync(path.resolve(rootDir, '..', 'apple'))) {
+            rootDir = path.resolve(rootDir, '..');
+        }
+
+        const certPath = path.resolve(rootDir, this.configService.get<string>('apple.certPath') || 'apple/certs/passcertificate.pem');
+        const keyPath = path.resolve(rootDir, this.configService.get<string>('apple.keyPath') || 'apple/certs/passkey.pem');
+        const wwdrPath = path.resolve(rootDir, this.configService.get<string>('apple.wwdrPath') || 'apple/certs/wwdr.pem');
         const templatePath = path.resolve(rootDir, 'apple/templates');
 
         console.log('🔍 Resolving Apple Wallet paths:');
@@ -30,16 +35,27 @@ export class AppleService {
         console.log(' - Template:', templatePath);
 
         const missingFiles: string[] = [];
-        if (!fs.existsSync(certPath)) missingFiles.push('Cert');
-        if (!fs.existsSync(keyPath)) missingFiles.push('Key');
-        if (!fs.existsSync(wwdrPath)) missingFiles.push('WWDR');
+
+        // Support loading certificates from environment variables (Fly Secrets)
+        const certEnv = this.configService.get<string>('APPLE_CERTIFICATE');
+        const keyEnv = this.configService.get<string>('APPLE_KEY');
+        const wwdrEnv = this.configService.get<string>('WWDR_CERTIFICATE');
+
+        if (certEnv) this.cert = Buffer.from(certEnv, certEnv.includes('BEGIN') ? 'utf8' : 'base64');
+        else if (fs.existsSync(certPath)) this.cert = fs.readFileSync(certPath);
+        else missingFiles.push('Cert');
+
+        if (keyEnv) this.key = Buffer.from(keyEnv, keyEnv.includes('BEGIN') ? 'utf8' : 'base64');
+        else if (fs.existsSync(keyPath)) this.key = fs.readFileSync(keyPath);
+        else missingFiles.push('Key');
+
+        if (wwdrEnv) this.wwdr = Buffer.from(wwdrEnv, wwdrEnv.includes('BEGIN') ? 'utf8' : 'base64');
+        else if (fs.existsSync(wwdrPath)) this.wwdr = fs.readFileSync(wwdrPath);
+        else missingFiles.push('WWDR');
+
         if (!fs.existsSync(templatePath)) missingFiles.push('Template');
 
         if (missingFiles.length === 0) {
-            this.cert = fs.readFileSync(certPath);
-            this.key = fs.readFileSync(keyPath);
-            this.wwdr = fs.readFileSync(wwdrPath);
-
             try {
                 this.template = await TemplateClass.load(templatePath);
                 this.template.setCertificate(this.cert);
