@@ -7,6 +7,9 @@
 - A Google Cloud project with Wallet API enabled
 - AWS S3 bucket for image storage
 
+> 💡 **Step-by-Step Credentials Guide**:
+> For an in-depth walkthrough on obtaining all certificates, service account JSON files, and configuration variables, read [How_to_get_env_files.md](./How_to_get_env_files.md).
+
 ---
 
 ## 1. Clone & Install
@@ -99,6 +102,10 @@ cd ../admin && npm install
 ---
 
 ## 4. Environment File Setup
+
+> 📘 **Detailed Step-by-Step Walkthrough**:
+> See the dedicated [How_to_get_env_files.md](./How_to_get_env_files.md) for a comprehensive, click-by-click guide with official portal links on how to obtain every key, certificate, and environment variable from Google Cloud, Google Pay & Wallet Console, and the Apple Developer Member Center.
+
 ```bash
 cp core/.env.example core/.env
 ```
