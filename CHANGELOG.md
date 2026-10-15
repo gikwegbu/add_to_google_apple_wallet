@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-10-15] - Comprehensive Environment Setup & Credentials Walkthrough
+
+### Added
+- **`How_to_get_env_files.md`**: Complete, click-by-click walkthrough guide detailing how to obtain all certificates, keys, and values needed for `.env` files across Google Cloud, Google Pay & Wallet Console, Apple Developer Portal, and AWS.
+- **Master Quick Reference Matrix**: Comprehensive table mapping every environment variable to its target file, example value, and official developer portal.
+- **Admin Environment Template**: Added `admin/.env.example` defining `VITE_API_BASE_URL` for local development.
+
+### Improved
+- **Apple Wallet Certificate Path Resolution**: Corrected certificate path definitions in `core/.env.example` (`apple/certs/...`) to match runtime root resolution in `apple.service.ts`.
+- **Database Port Documentation**: Documented Docker Compose port mapping (`5433:5432`) in `core/.env.example` to prevent port collision issues with local PostgreSQL instances.
+- **Setup & Onboarding Documentation**: Enhanced `README.md` with direct references and tips pointing to the environment walkthrough guide.
+
 ## [2026-03-03] - Rewards & User Management Enhancements
 
 ### Added
