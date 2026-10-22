@@ -1,11 +1,11 @@
 {
     "formatVersion": 1,
-    "passTypeIdentifier": "pass.com.gikwegbu.wallet",
+    "passTypeIdentifier": "pass.com.yourcompany.wallet",
     "serialNumber": "GENERIC_SERIAL",
-    "teamIdentifier": "NXQNVCYXQ2",
-    "organizationName": "IkwegbuGeorge",
+    "teamIdentifier": "YOUR_APPLE_TEAM_ID",
+    "organizationName": "Your Organization Name",
     "description": "Electronic Ticket & Rewards Pass",
-    "logoText": "IkwegbuGeorge",
+    "logoText": "Your Brand",
     "foregroundColor": "rgb(255, 255, 255)",
     "backgroundColor": "rgb(0, 0, 0)",
     "generic": {

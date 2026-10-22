@@ -83,14 +83,14 @@ google_apple_wallet/
 | `GOOGLE_CLASS_ID` | `core/.env` | `3388000000023066256.codelab_class` | [Google Pay & Wallet Console](https://pay.google.com/business/console/) |
 | `GOOGLE_SERVICE_ACCOUNT_EMAIL` | `core/.env` | `sa@project.iam.gserviceaccount.com` | From downloaded `service-account.json`. |
 | `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` | `core/.env` | `"-----BEGIN RSA PRIVATE KEY-----\n..."` | From downloaded `service-account.json`. |
-| `APPLE_TEAM_ID` | `core/.env` | `NXQNVCYXQ2` | [Apple Developer Membership](https://developer.apple.com/account/#!/membership) |
+| `APPLE_TEAM_ID` | `core/.env` | `YOUR_APPLE_TEAM_ID` | [Apple Developer Membership](https://developer.apple.com/account/#!/membership) |
 | `APPLE_PASS_TYPE_IDENTIFIER` | `core/.env` | `pass.com.yourcompany.wallet` | [Apple Developer Identifiers](https://developer.apple.com/account/resources/identifiers/list) |
 | `APPLE_CERT_PATH` | `core/.env` | `apple/certs/passcertificate.pem` | Extracted from `pass.p12` via OpenSSL. |
 | `APPLE_KEY_PATH` | `core/.env` | `apple/certs/passkey.pem` | Extracted from `pass.p12` via OpenSSL. |
 | `APPLE_WWDR_PATH` | `core/.env` | `apple/certs/wwdr.pem` | [Apple Certificate Authority (WWDR G4)](https://www.apple.com/certificateauthority/) |
 | `APPLE_CERT_PASSPHRASE` | `core/.env` | `your_export_passphrase` | Password entered when exporting `.p12` from Keychain. |
-| `APPLE_APN_KEY_ID` | `core/.env` | `4MVZD89RK3` | [Apple Developer Keys](https://developer.apple.com/account/resources/authkeys/list) |
-| `APPLE_APN_TEAM_ID` | `core/.env` | `NXQNVCYXQ2` | Same as `APPLE_TEAM_ID`. |
+| `APPLE_APN_KEY_ID` | `core/.env` | `3ZED£$9RK3` | [Apple Developer Keys](https://developer.apple.com/account/resources/authkeys/list) |
+| `APPLE_APN_TEAM_ID` | `core/.env` | `YOUR_APPLE_TEAM_ID` | Same as `APPLE_TEAM_ID`. |
 | `APPLE_APN_TOPIC` | `core/.env` | `pass.com.yourcompany.wallet` | Same as `APPLE_PASS_TYPE_IDENTIFIER`. |
 | `PASS_ORGANIZATION_NAME` | `core/.env` | `Your Brand Name` | Display name of pass issuer. |
 | `PASS_DESCRIPTION` | `core/.env` | `Electronic Ticket & Rewards Pass` | User-facing pass summary. |
@@ -286,8 +286,8 @@ Apple Wallet requires cryptographic signing using PKCS#7 / CMS certificates sign
 ### Step 6.1: Locate your Apple Developer Team ID
 1. Log in to the **[Apple Developer Account Portal](https://developer.apple.com/account/)**.
 2. Click on the **[Membership Details](https://developer.apple.com/account/#!/membership)** tab in the left sidebar.
-3. Locate the **Team ID** (a 10-character alphanumeric string like `NXQNVCYXQ2`).
-4. Set `APPLE_TEAM_ID=NXQNVCYXQ2` in `core/.env`.
+3. Locate the **Team ID** (a 10-character alphanumeric string like `YOUR_APPLE_TEAM_ID`).
+4. Set `APPLE_TEAM_ID=YOUR_APPLE_TEAM_ID` in `core/.env`.
 
 ---
 
@@ -437,7 +437,7 @@ openssl x509 -in wwdr.pem -noout -subject -dates
    {
        "formatVersion": 1,
        "passTypeIdentifier": "pass.com.yourcompany.wallet",
-       "teamIdentifier": "NXQNVCYXQ2",
+       "teamIdentifier": "YOUR_APPLE_TEAM_ID",
        "organizationName": "Your Organization Name",
        "description": "Electronic Ticket & Rewards Pass"
    }
@@ -462,7 +462,7 @@ To send dynamic updates to passes already installed on users' iPhones (e.g. when
 7. Configure the APNs environment variables:
    ```dotenv
    APPLE_APN_KEY_ID=4MVZD89RK3
-   APPLE_APN_TEAM_ID=NXQNVCYXQ2
+   APPLE_APN_TEAM_ID=YOUR_APPLE_TEAM_ID
    APPLE_APN_TOPIC=pass.com.yourcompany.wallet
    ```
 
@@ -591,14 +591,14 @@ fly secrets set \
   GOOGLE_ISSUER_ID="3388000000023066256" \
   GOOGLE_CLASS_ID="3388000000023066256.codelab_class" \
   GOOGLE_SERVICE_ACCOUNT_EMAIL="sa@wallet-pass.iam.gserviceaccount.com" \
-  APPLE_TEAM_ID="NXQNVCYXQ2" \
+  APPLE_TEAM_ID="YOUR_APPLE_TEAM_ID" \
   APPLE_PASS_TYPE_IDENTIFIER="pass.com.yourcompany.wallet" \
   APPLE_CERT_PATH="apple/certs/passcertificate.pem" \
   APPLE_KEY_PATH="apple/certs/passkey.pem" \
   APPLE_WWDR_PATH="apple/certs/wwdr.pem" \
   APPLE_CERT_PASSPHRASE="" \
   APPLE_APN_KEY_ID="4MVZD89RK3" \
-  APPLE_APN_TEAM_ID="NXQNVCYXQ2" \
+  APPLE_APN_TEAM_ID="YOUR_APPLE_TEAM_ID" \
   APPLE_APN_TOPIC="pass.com.yourcompany.wallet" \
   ADMIN_JWT_SECRET="$(openssl rand -base64 32)" \
   -a wallet-core

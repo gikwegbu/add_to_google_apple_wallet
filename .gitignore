@@ -2,21 +2,35 @@
 .DS_Store
 **/.DS_Store
 
+# Certificates and Keys
+*.pem
+*.p12
+*.p8
+*.key
+apple/certs/
+core/apple/certs/
 
-# Certificates
-apple/certs/*.pem
-apple/certs/*.p12
-core/apple/certs/*.pem
-core/apple/certs/*.p12
-
-# Service account
+# Service account & credentials
+*service-account*.json
+reisty-*.json
 core/service-account.json
 
-# Pass.json
-core/apple/templates/*.json
+# Pass templates build artifacts & local configurations
 core/apple/templates/*.pkpass
+core/apple/templates/*.json
+!core/apple/templates/*.json.example
+*.pkpass
 
 # Environment variables
-core/.env
-core/.env_reisty
-admin/.env
+# Ignore all .env files and their variants across all directories
+.env
+.env.*
+.env_*
+*.env
+**/.env
+**/.env.*
+**/.env_*
+
+# Allow example environment templates into version control
+!**/.env.example
+!**/*.env.example
