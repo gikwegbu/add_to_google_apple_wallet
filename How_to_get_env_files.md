@@ -122,7 +122,11 @@ API_BASE_URL=http://localhost:3000
 1. **`PORT`**: The TCP port on which the NestJS HTTP application listens. Default is `3000`.
 2. **`NODE_ENV`**: Set to `development` for local testing or `production` when deployed.
 3. **`API_BASE_URL`**:
-   - In **Local Development**: `http://localhost:3000` (or `http://<your-lan-ip>:3000` if testing passes on physical phones on the same Wi-Fi).
+   - In **Local Development**: `http://localhost:3000` (or an HTTPS tunnel when testing passes on physical phones).
+   - In **Local Testing with Physical Mobile Devices (ngrok)**:
+     - Run `ngrok http 3000` (or `ngrok http --url=https://<your-subdomain>.ngrok-free.dev 3000`).
+     - Set `API_BASE_URL=https://<your-subdomain>.ngrok-free.dev` in `core/.env`.
+     - *Why?* iOS strictly refuses plain `http://` for Apple Wallet's `webServiceURL`, and Google Wallet requires authorized origins. An HTTPS ngrok tunnel enables full live testing on iPhone and Android devices from your local machine.
    - In **Production**: Must be a fully-qualified public HTTPS URL (e.g. `https://wallet-core.fly.dev` or `https://api.yourdomain.com`).
    - > **Important**: Apple Wallet strictly requires HTTPS for the pass web service (`webServiceURL`). If this URL uses plain `http://`, iOS devices will refuse to register the pass for automatic updates.
 
@@ -231,9 +235,9 @@ Google Wallet passes require credentials from two distinct Google platforms:
 > Even if your Service Account has "Owner" in Google Cloud, it **cannot** issue or modify Google Wallet passes until it is explicitly added as an authorized user inside the Google Pay & Wallet Console.
 > Failure to complete this step results in `401 Unauthorized: Request had invalid authentication credentials` or `403 Forbidden: Not an issuer`.
 
-1. In the **[Google Pay & Wallet Console](https://pay.google.com/business/console/)**, navigate to the **Google Wallet API** tab.
-2. Look for **User Access** or **API Access** (or click the Settings gear icon / **Users** tab).
-3. Click **Add User** or **Authorize Service Account**.
+1. In the **[Google Pay & Wallet Console](https://pay.google.com/business/console/)**.
+2. Look for **Users**.
+3. Click **Invite a user**.
 4. Paste the full `GOOGLE_SERVICE_ACCOUNT_EMAIL` (e.g., `wallet-issuer-sa@wallet-pass-service.iam.gserviceaccount.com`).
 5. Set the permission level to **Developer** or **Admin**.
 6. Click **Save** / **Add**.

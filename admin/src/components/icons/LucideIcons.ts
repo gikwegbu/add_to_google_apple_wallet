@@ -28,14 +28,14 @@ export const SearchIcon = createIcon('M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0
 export const MoreVerticalIcon = createIcon('M12 12h.01M12 18h.01M12 6h.01');
 export const Trash2Icon = createIcon('M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2');
 export const UserPlusIcon = createIcon('M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M20 8v6M23 11h-6');
-export const MailIcon = createIcon('rect width="20" height="16" x="2" y="4" rx="2"'); // Approximate
+export const MailIcon = createIcon('M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM22 6l-10 7L2 6');
 export const AwardIcon = createIcon('M12 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6z'); // Approximate
 export const ChevronRightIcon = createIcon('m9 18 6-6-6-6');
 export const TrendingUpIcon = createIcon('m22 7-8.5 8.5-5-5L2 17');
 export const ArrowUpRightIcon = createIcon('M7 7h10v10M7 17 17 7');
 export const SettingsIcon = createIcon('M12 12h.01M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z'); // Approximate
-export const CalendarIcon = createIcon('rect width="18" height="18" x="3" y="4" rx="2" ry="2"'); // Approximate
+export const CalendarIcon = createIcon('M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM16 2v4M8 2v4M3 10h18');
 export const MapPinIcon = createIcon('M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z');
-export const CameraIcon = createIcon('path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"');
+export const CameraIcon = createIcon('M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z');
 export const UserIcon = createIcon('M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 0 1 0-8 4 4 0 0 1 0 8z');
 export const CopyIcon = createIcon('M9 15h-2a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2m-6 10h8a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2z');

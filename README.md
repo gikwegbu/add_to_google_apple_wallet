@@ -155,21 +155,35 @@ Never commit .env or any PEM/JSON credential files to version control.
 ---
 
 ## Features
-- 🎨 **Modern Admin UI**: Responsive, premium dashboard built with Vue.js and Tailwind CSS.
-- 📱 **Digital Wallet Integration**: Support for Google Wallet (and Apple Wallet hooks) for digital passes.
+- 🎨 **Modern Admin UI**: Responsive, premium dashboard built with Vue.js and Tailwind CSS featuring interactive pass chips and quick actions.
+- 📱 **Digital Wallet Integration**:
+  - **Google Wallet**: Instant dynamic pass generation with one-click Save to Wallet (`/google/pass/:userId`).
+  - **Apple Wallet**: Certified `.pkpass` generation and download with custom filename prefix (`/apple/pass/:userId`).
+- ⚡ **Pass Chips & Actions**:
+  - **Google Chip**: Click opens a new tab navigating directly to the Google Wallet save interface.
+  - **Apple Chip**: Click downloads the `.pkpass` bundle prefixed with the user's name (e.g. `George_ikwegbu_pass.pkpass`).
 - 📸 **Smart Scanning**: Dual-mode QR scanner (Camera + Image Upload) with automatic camera lifecycle management.
 - 💰 **Rewards System**: Dynamic point deduction and manual credit with Email/UUID support.
 - 🏛️ **Transaction Persistence**: Complete, searchable history of all point transactions stored in a robust database.
 - 👥 **User Management**: Quick registration and management of users with instant pass generation.
 
+---
+
 ## 6. Run Locally
 
-# Backend
+### Step 1: Start PostgreSQL Database
+```bash
+docker compose up -d
+```
+*(Runs on host port `5433` mapped to internal `5432`)*
+
+### Step 2: Start Backend (Core)
 ```bash
 cd core
 npm run start:dev
 ```
-# Admin dashboard
+
+### Step 3: Start Admin Dashboard
 ```bash
 cd admin
 npm run dev
@@ -177,28 +191,74 @@ npm run dev
 
 ---
 
-## 7. Hosting & Production
+## 7. Testing Passes on Mobile with ngrok (HTTPS Tunneling)
 
-1. Host the NestJS core on Railway, Render, or any Node host
-2. Set all environment variables in the host's dashboard — NOT via .env file
-3. The app reads everything from process.env automatically via env.config.ts
-4. Ensure your Apple .pkpass download endpoint is HTTPS (required by iOS)
-5. Register your hosted API URL with the Apple Wallet web service if using push updates
+Both Apple Wallet and Google Wallet have strict HTTPS and hostname requirements when issuing passes or delivering pass updates to physical smartphones:
+
+- **Apple Wallet**: iOS **strictly requires** HTTPS for `webServiceURL`. If the backend URL uses plain `http://localhost`, iOS devices will refuse to register the pass or check for updates.
+- **Google Wallet**: Google Wallet JWT tokens enforce an `origins` check. Testing on a physical Android device requires a publicly reachable HTTPS origin.
+
+### How to set up ngrok:
+
+1. **Start ngrok tunnel on port 3000**:
+   ```bash
+   ngrok http 3000
+   ```
+   Or if you have a persistent ngrok free domain:
+   ```bash
+   ngrok http --url=https://your-domain.ngrok-free.dev 3000
+   ```
+
+2. **Update `core/.env`**:
+   ```dotenv
+   API_BASE_URL=https://your-domain.ngrok-free.dev
+   ```
+
+3. **Update `admin/.env` (optional, for cross-device admin testing)**:
+   ```dotenv
+   VITE_API_BASE_URL=https://your-domain.ngrok-free.dev
+   ```
+
+4. **Verify pass generation**:
+   - Google pass redirect: `https://your-domain.ngrok-free.dev/google/pass/<userId>`
+   - Apple pass download: `https://your-domain.ngrok-free.dev/apple/pass/<userId>`
 
 ---
 
-## 8. Register First Admin & Issue First Pass
+## 8. Pass Endpoints API Reference
 
-1. POST /api/auth/login with ADMIN_EMAIL and ADMIN_PASSWORD from .env
-2. Open admin dashboard → Users → Add a user email
-3. System provisions a Google Wallet pass link and an Apple .pkpass file for that user
-4. User clicks the link on their device → pass is added to their wallet
+| Endpoint | Method | Description | Response |
+|---|---|---|---|
+| `/google/pass/:userId` | `GET` | Generates a Google Wallet pass and redirects | `302 Redirect` to `https://pay.google.com/gp/v/save/<jwt>` |
+| `/google/url/:userId` | `GET` | Generates a Google Wallet pass URL | JSON: `{ "saveUrl": "https://pay.google.com/..." }` |
+| `/apple/pass/:userId` | `GET` | Generates and signs a `.pkpass` bundle | Binary file (`application/vnd.apple.pkpass`), filename: `<Name>_pass.pkpass` |
+| `/users/register` | `POST` | Registers a user and creates passes | JSON with user details, `googlePassUrl`, `applePassUrl` |
 
 ---
 
-## 9. QR Redemption Flow
+## 9. Hosting & Production
 
-1. User opens wallet pass → QR code is displayed (contains signed token)
-2. Merchant scans QR via admin dashboard → RewardScanner component
-3. System validates token → deducts 10 points → decrements ticket quantity
-4. Both Google and Apple passes update in real time
+1. Host the NestJS core on Railway, Render, Fly.io, or any Node host.
+2. Set all environment variables in the host's dashboard — NOT via `.env` file.
+3. The app reads everything from `process.env` automatically via `env.config.ts`.
+4. Ensure your Apple `.pkpass` download endpoint is HTTPS (required by iOS).
+5. Register your hosted API URL with the Apple Wallet web service if using push updates.
+
+---
+
+## 10. Register First Admin & Issue First Pass
+
+1. POST `/api/auth/login` with `ADMIN_EMAIL` and `ADMIN_PASSWORD` from `.env`.
+2. Open admin dashboard → Users → Enter First Name, Last Name, and Email.
+3. Click **Add User** — the system generates passes automatically.
+4. Click the **GOOGLE** chip to open the Google Wallet save page, or click the **APPLE** chip to download the `<Fullname>_pass.pkpass` file.
+
+---
+
+## 11. QR Redemption Flow
+
+1. User opens wallet pass on their smartphone → QR code is displayed (contains signed token).
+2. Merchant scans QR via admin dashboard → RewardScanner component.
+3. System validates token → deducts 10 points → decrements ticket quantity.
+4. Both Google and Apple passes update in real time.
+

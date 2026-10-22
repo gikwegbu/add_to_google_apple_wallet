@@ -12,11 +12,15 @@ export class AppleService {
     private key: Buffer;
     private wwdr: Buffer;
 
-    constructor(private configService: ConfigService) {
-        // We will initialize this lazily or in onModuleInit to avoid startup errors if files missing
-    }
+    constructor(private configService: ConfigService) {}
 
     async onModuleInit() {
+        await this.initTemplate();
+    }
+
+    async initTemplate(): Promise<boolean> {
+        if (this.template) return true;
+
         // Try current dir first (production/docker), then parent dir (local dev)
         let rootDir = process.cwd();
         if (!fs.existsSync(path.resolve(rootDir, 'apple')) && fs.existsSync(path.resolve(rootDir, '..', 'apple'))) {
@@ -63,15 +67,22 @@ export class AppleService {
                 this.template.wwdrCertificate = this.wwdr;
 
                 console.log('✅ Apple Wallet template and certificates loaded successfully');
+                return true;
             } catch (error) {
                 console.error('❌ Error loading Apple Wallet template/certs:', error);
+                return false;
             }
         } else {
             console.warn(`⚠️ Apple Wallet files missing: ${missingFiles.join(', ')}. Pass generation will be disabled.`);
+            return false;
         }
     }
 
     async createPass(user: any, ticketConfig: any) {
+        if (!this.template) {
+            await this.initTemplate();
+        }
+
         if (!this.template) {
             console.error('❌ Apple Wallet template not initialized');
             return {
@@ -109,7 +120,10 @@ export class AppleService {
             console.warn('⚠️ pass.barcodes is missing or incompatible. Available properties:', Object.keys(pass));
         }
 
-        const authenticationToken = 'auth-' + Math.random().toString(36).substring(7);
+        // This generate and then crops 7 characters
+        // const authenticationToken = 'auth-' + Math.random().toString(36).substring(7);
+        const authenticationToken = 'auth-' + Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
+        // const authenticationToken = require('crypto').randomBytes(16).toString('hex');
 
         const webServiceURL = `${this.configService.get('API_BASE_URL')}/api/apple`;
         if (webServiceURL.startsWith('https://')) {

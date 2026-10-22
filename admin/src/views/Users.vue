@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import client from '../api/client';
+import client, { apiBaseUrl } from '../api/client';
 import { 
   SearchIcon, 
   Trash2Icon, 
@@ -19,11 +19,19 @@ const lastName = ref('');
 const searchQuery = ref('');
 const isLoading = ref(false);
 
+const getAppleFileName = (user: any) => {
+  const prefix = (user.fullname || user.email?.split('@')[0] || 'user')
+    .trim()
+    .replace(/\s+/g, '_')
+    .replace(/[^a-zA-Z0-9_-]/g, '');
+  return `${prefix}_pass.pkpass`;
+};
+
 const fetchUsers = async () => {
     isLoading.value = true;
     try {
         const res = await client.get('/users');
-        users.value = res.data;
+        users.value = Array.isArray(res.data) ? res.data : [];
     } finally {
         isLoading.value = false;
     }
@@ -61,10 +69,12 @@ const copyToClipboard = (text: string) => {
 };
 
 const filteredUsers = computed(() => {
+    if (!Array.isArray(users.value)) return [];
     if (!searchQuery.value) return users.value;
+    const q = searchQuery.value.toLowerCase();
     return users.value.filter(u => 
-        u.email.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        u.fullname?.toLowerCase().includes(searchQuery.value.toLowerCase())
+        (u.email && u.email.toLowerCase().includes(q)) ||
+        (u.fullname && u.fullname.toLowerCase().includes(q))
     );
 });
 
@@ -151,7 +161,7 @@ onMounted(fetchUsers);
       <div class="hidden md:block overflow-x-auto">
         <table class="w-full text-left">
           <thead>
-            <tr class="bg-slate-50 border-b border-slate-100">
+            <tr class="bg-slate-50/80 border-b border-slate-100">
               <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">User</th>
               <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Points</th>
               <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Passes</th>
@@ -162,43 +172,56 @@ onMounted(fetchUsers);
             <tr v-for="user in filteredUsers" :key="user.id" class="hover:bg-slate-50/50 transition-colors group">
               <td class="px-6 py-4">
                 <div class="flex items-center">
-                  <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold mr-3 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                    {{ (user.fullname || user.email).charAt(0).toUpperCase() }}
+                  <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-base mr-3 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                    {{ (user.fullname || user.email || '?').charAt(0).toUpperCase() }}
                   </div>
                   <div>
-                    <p class="font-bold text-slate-900 leading-none">{{ user.fullname || 'Default User' }}</p>
-                    <p class="text-xs text-slate-400 mt-1">{{ user.email }}</p>
+                    <p class="font-bold text-slate-900 leading-tight">{{ user.fullname || 'Default User' }}</p>
+                    <p class="text-xs text-slate-400 mt-0.5">{{ user.email }}</p>
                   </div>
                 </div>
               </td>
               <td class="px-6 py-4 text-center">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-100">
-                  <AwardIcon class="w-3 h-3 mr-1" />
-                  {{ user.points }}
+                <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-[#FEF3C7]/70 text-[#B45309] border border-[#FDE68A]">
+                  <span class="text-[11px] leading-none text-[#D97706]">°</span>
+                  <span>{{ user.points ?? 0 }}</span>
                 </span>
               </td>
               <td class="px-6 py-4">
-                <div class="flex gap-2">
-                  <div v-if="user.googlePassId" class="inline-flex items-center px-2 py-1 bg-slate-50 border border-slate-200 rounded-md">
-                    <span class="w-2 h-2 rounded-full bg-blue-500 mr-2"></span>
-                    <span class="text-[10px] font-bold text-slate-600 uppercase">Google</span>
-                  </div>
-                  <div v-if="user.applePassId" class="inline-flex items-center px-2 py-1 bg-slate-50 border border-slate-200 rounded-md">
-                    <span class="w-2 h-2 rounded-full bg-slate-900 mr-2"></span>
-                    <span class="text-[10px] font-bold text-slate-600 uppercase">Apple</span>
-                  </div>
-                  <span v-if="!user.googlePassId && !user.applePassId" class="text-slate-300 text-xs italic">No passes</span>
+                <div class="flex items-center gap-2">
+                  <!-- Google Pass Chip: click opens new tab with Google Wallet pass URL -->
+                  <a 
+                    :href="`${apiBaseUrl}/google/pass/${user.id}`" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    title="Open Google Wallet Pass in new tab"
+                    class="inline-flex items-center px-3 py-1.5 bg-[#F8FAFB] hover:bg-slate-100 active:bg-slate-200 border border-slate-200 hover:border-slate-300 rounded-lg cursor-pointer transition-all shadow-2xs group/chip select-none"
+                  >
+                    <span class="w-2 h-2 rounded-full bg-[#1A73E8] mr-2 shrink-0 group-hover/chip:scale-110 transition-transform"></span>
+                    <span class="text-[11px] font-bold text-slate-700 group-hover/chip:text-slate-900 tracking-wider uppercase">GOOGLE</span>
+                  </a>
+
+                  <!-- Apple Pass Chip: click downloads pass file with user name prefix -->
+                  <a 
+                    :href="`${apiBaseUrl}/apple/pass/${user.id}`" 
+                    :download="getAppleFileName(user)"
+                    :title="`Download Apple Wallet Pass (${getAppleFileName(user)})`"
+                    class="inline-flex items-center px-3 py-1.5 bg-[#F8FAFB] hover:bg-slate-100 active:bg-slate-200 border border-slate-200 hover:border-slate-300 rounded-lg cursor-pointer transition-all shadow-2xs group/chip select-none"
+                  >
+                    <span class="w-2 h-2 rounded-full bg-[#0F172B] mr-2 shrink-0 group-hover/chip:scale-110 transition-transform"></span>
+                    <span class="text-[11px] font-bold text-slate-700 group-hover/chip:text-slate-900 tracking-wider uppercase">APPLE</span>
+                  </a>
                 </div>
               </td>
               <td class="px-6 py-4 text-right">
-                <div class="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button @click="copyToClipboard(user.email)" title="Copy Email" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                <div class="flex items-center justify-end space-x-2 text-slate-400">
+                  <button @click="copyToClipboard(user.email)" title="Copy Email" class="p-2 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
                     <CopyIcon class="w-4 h-4" />
                   </button>
-                  <button @click="deleteUser(user.id)" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                  <button @click="deleteUser(user.id)" title="Delete User" class="p-2 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                     <Trash2Icon class="w-4 h-4" />
                   </button>
-                  <button class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                  <button title="More Actions" class="p-2 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
                     <MoreVerticalIcon class="w-4 h-4" />
                   </button>
                 </div>
@@ -218,15 +241,35 @@ onMounted(fetchUsers);
         <div v-for="user in filteredUsers" :key="user.id" class="p-4 flex items-center justify-between hover:bg-slate-50">
           <div class="flex items-center">
              <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold mr-3">
-              {{ (user.fullname || user.email).charAt(0).toUpperCase() }}
+              {{ (user.fullname || user.email || '?').charAt(0).toUpperCase() }}
             </div>
             <div>
               <p class="font-bold text-slate-900 text-sm">{{ user.fullname || 'Default User' }}</p>
               <p class="text-xs text-slate-400">{{ user.email }}</p>
-              <div class="flex gap-1 mt-1">
-                <span class="text-[10px] text-amber-600 font-bold bg-amber-50 px-1 rounded">{{ user.points }} pts</span>
-                <span v-if="user.googlePassId" class="text-[10px] text-blue-600 font-bold bg-blue-50 px-1 rounded">G</span>
-                <span v-if="user.applePassId" class="text-[10px] text-slate-600 font-bold bg-slate-100 px-1 rounded">A</span>
+              <div class="flex items-center gap-2 mt-2">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#FEF3C7]/60 text-amber-800 border border-[#FDE68A]">
+                  <span class="text-[9px] text-amber-600 font-bold mr-1">°</span>
+                  {{ user.points ?? 0 }}
+                </span>
+                <a 
+                  :href="`${apiBaseUrl}/google/pass/${user.id}`" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  title="Open Google Pass in new tab" 
+                  class="inline-flex items-center px-2.5 py-1 bg-[#F8FAFB] hover:bg-slate-100 active:bg-slate-200 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-700 tracking-wider transition-all"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full bg-[#1A73E8] mr-1.5"></span>
+                  GOOGLE
+                </a>
+                <a 
+                  :href="`${apiBaseUrl}/apple/pass/${user.id}`" 
+                  :download="getAppleFileName(user)" 
+                  :title="`Download ${getAppleFileName(user)}`"
+                  class="inline-flex items-center px-2.5 py-1 bg-[#F8FAFB] hover:bg-slate-100 active:bg-slate-200 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-700 tracking-wider transition-all"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full bg-[#0F172B] mr-1.5"></span>
+                  APPLE
+                </a>
               </div>
             </div>
           </div>

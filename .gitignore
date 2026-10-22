@@ -12,6 +12,11 @@ core/apple/certs/*.p12
 # Service account
 core/service-account.json
 
+# Pass.json
+core/apple/templates/*.json
+core/apple/templates/*.pkpass
+
 # Environment variables
 core/.env
+core/.env_reisty
 admin/.env

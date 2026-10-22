@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { GoogleService } from '../google/google.service';
 import { AppleService } from '../apple/apple.service';
@@ -11,6 +12,7 @@ export class UsersService {
         private prisma: PrismaService,
         private googleService: GoogleService,
         private appleService: AppleService,
+        private configService: ConfigService,
     ) { }
 
     async register(email: string, fullname: string) {
@@ -25,11 +27,13 @@ export class UsersService {
     }
 
     const ticketConfig = {
-        eventName: 'Demo Event',
+        eventName: 'Reisty FFO Event',
         imageUrl: 'https://newreistyfilestorage.blob.core.windows.net/restaurantlogo/ecb73eed-9f05-40a1-83a3-f674fe0b3d55IMG_0171.jpg',
         logoUrl: 'https://newreistyfilestorage.blob.core.windows.net/restaurantlogo/ecb73eed-9f05-40a1-83a3-f674fe0b3d55IMG_0171.jpg',
         fullname : user.fullname,
     };
+
+    const baseUrl = this.configService.get<string>('API_BASE_URL') || 'http://localhost:3000';
 
     // Only create passes for new users
     if (isNewUser) {
@@ -48,6 +52,7 @@ export class UsersService {
         return {
             user,
             googlePassUrl: googlePass.saveUrl,
+            applePassUrl: `${baseUrl}/apple/pass/${user.id}`,
             applePassToken: applePass.authenticationToken,
         };
     }
@@ -55,7 +60,9 @@ export class UsersService {
     // Existing user — return their existing pass IDs
     return {
         user,
-        googlePassUrl: user.googlePassId ? `https://pay.google.com/gp/v/save/${user.googlePassId}` : null,
+        // googlePassUrl: user.googlePassId ? `https://pay.google.com/gp/v/save/${user.googlePassId}` : null,
+        googlePassUrl: `${baseUrl}/google/pass/${user.id}`,
+        applePassUrl: `${baseUrl}/apple/pass/${user.id}`,
         applePassToken: user.applePassId || null,
     };
 }

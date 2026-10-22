@@ -147,7 +147,6 @@ export class GoogleService implements OnModuleInit {
             aud: 'google',
             typ: 'savetowallet',
             iat: Math.floor(Date.now() / 1000),
-            // origins: ['http://localhost:3000'],
             origins: [this.configService.get<string>('API_BASE_URL'), 'http://localhost:3000'],
             payload: {
                 genericObjects: [passObject], // ✅ was loyaltyObjects

@@ -209,3 +209,91 @@ const auth = new GoogleAuth({
   scopes: ['https://www.googleapis.com/auth/wallet_object.issuer'],
 });
 ```
+
+---
+
+## 8. Apple PassKit — `authenticationToken must be 16 characters or longer`
+
+### Symptom
+```
+[ExceptionsHandler] TypeError: authenticationToken must must be 16 characters or longer
+    at set authenticationToken (@walletpass/pass-js/dist/lib/base-pass.js:282:19)
+    at AppleService.createPass (apple.service.ts:120:37)
+```
+
+### Cause
+Apple's PassKit specification and the `@walletpass/pass-js` library mandate that any pass containing a `webServiceURL` must have an `authenticationToken` of at least 16 characters. Generating short random strings like `'auth-' + Math.random().toString(36).substring(7)` produces only ~12 characters.
+
+### Fix
+Generate an authentication token that is at least 16 characters long:
+```ts
+const authenticationToken = 'auth-' + Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
+// Or using Node crypto:
+// const authenticationToken = crypto.randomBytes(16).toString('hex');
+```
+
+---
+
+## 9. Apple PassKit — `SyntaxError: Missing required image icon.png`
+
+### Symptom
+```
+SyntaxError: Missing required image icon.png
+    at Template.createPass (@walletpass/pass-js/dist/lib/template.js)
+```
+
+### Cause
+Apple PassKit packages (`.pkpass`) require at least an `icon.png` (29x29) and `logo.png` image inside the template folder. If the template folder (`apple/templates/`) only has `pass.json`, pass generation will fail.
+
+### Fix
+Place the required image assets inside `apple/templates/` (and `core/apple/templates/`):
+- `icon.png` (29x29)
+- `icon@2x.png` (58x58)
+- `icon@3x.png` (87x87)
+- `logo.png` (160x50)
+- `logo@2x.png` (320x100)
+
+Also ensure lazy loading in `AppleService`:
+```ts
+if (!this.template) {
+    await this.initTemplate();
+}
+```
+
+---
+
+## 10. Apple PassKit — `webServiceURL must be HTTPS` & ngrok Tunneling
+
+### Symptom
+```
+⚠️ Apple Wallet webServiceURL must be HTTPS. Skipping for URL: http://localhost:3000/api/apple
+```
+On iOS, the pass cannot be added or registered for push notifications when using an unencrypted HTTP URL.
+
+### Fix
+Use [ngrok](https://ngrok.com/) to tunnel your local NestJS backend to a secure public HTTPS URL:
+```bash
+ngrok http 3000
+```
+Then update `core/.env`:
+```dotenv
+API_BASE_URL=https://your-subdomain.ngrok-free.dev
+```
+Restart the NestJS app (`npm run start:dev`). The pass will now be generated with a valid HTTPS `webServiceURL` that iOS accepts.
+
+---
+
+## 11. Frontend — SVG `<path> attribute d: Expected moveto path command`
+
+### Symptom
+```
+main.ts:12 Error: <path> attribute d: Expected moveto path command ('M' or 'm'), "path d=\"M23 19a2…".
+```
+
+### Cause
+In Vue icon components, an inner SVG element string was mistakenly assigned to the `d` attribute of a `<path>` element (e.g. `path d="<rect width=.../>"` instead of valid path coordinates starting with `M` or `m`).
+
+### Fix
+In `admin/src/components/icons/LucideIcons.ts`, ensure all icon path coordinates are clean SVG path strings:
+- Use proper path definitions (e.g., `<rect .../>` and `<path d="M..."/>`).
+- Check that the `d` attribute starts with a valid moveto command (`M` or `m`).

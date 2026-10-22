@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-10-22] - Google & Apple Wallet Pass Endpoints, Chip UI, and ngrok Tunneling
+
+### Added
+- **Dedicated Pass Endpoints**:
+  - `GET /google/pass/:userId`: Generates and redirects (`302`) directly to the Google Wallet save link (`https://pay.google.com/gp/v/save/<jwt>`).
+  - `GET /google/url/:userId`: Returns JSON with `{ saveUrl }` for headless/API integrations.
+  - `GET /apple/pass/:userId`: Generates, signs, and streams the `.pkpass` bundle with dynamic filename prefix matching the user (`[Fullname]_pass.pkpass`).
+- **Interactive Pass Chips in Admin UI**:
+  - **Google Chip**: Visual pill with blue dot indicator (`#1A73E8`) and uppercase bold label; opens the Google Wallet save interface in a new browser tab.
+  - **Apple Chip**: Visual pill with dark dot indicator (`#0F172B`) and uppercase bold label; triggers direct download of the `.pkpass` file with the user's name as prefix (e.g. `George_ikwegbu_pass.pkpass`).
+  - **Points Pill Redesign**: Styled pill matching reference design with degree symbol: `° 80`, `° 90`, `° 100`.
+- **Apple PassKit Assets**: Generated required Apple PassKit image bundle (`icon.png`, `icon@2x.png`, `icon@3x.png`, `logo.png`, `logo@2x.png`) in `core/apple/templates/` and `apple/templates/`.
+- **ngrok HTTPS Tunneling Guide**: Detailed instructions in `README.md`, `How_to_get_env_files.md`, and `README_bugFix.md` for tunneling port 3000 to HTTPS to satisfy Apple Wallet's strict HTTPS requirement for `webServiceURL` and Google Wallet's JWT origin verification on physical mobile devices.
+
+### Fixed
+- **Apple PassKit Authentication Token Constraint**: Resolved `@walletpass/pass-js` validation error (`TypeError: authenticationToken must be 16 characters or longer`) by generating compliant tokens $\ge 16$ chars.
+- **Apple Pass Template Lazy Loading**: Added `initTemplate()` on-demand loader in `AppleService` so passes are reliably created without needing manual server restarts if assets were loaded dynamically.
+- **Lucide SVG Icons**: Corrected invalid `<rect>` and `path d="..."` strings in `MailIcon`, `CalendarIcon`, and `CameraIcon` in `admin/src/components/icons/LucideIcons.ts` that caused browser SVG parser warnings.
+- **Google Pay Console Documentation**: Updated `How_to_get_env_files.md` to match current console UI for service account user invitations ("Users" → "Invite a user").
+- **Prisma User Safe Navigation**: Prevented runtime `TypeError` on null/undefined fullnames in `Users.vue` avatar rendering.
+
 ## [2026-10-15] - Comprehensive Environment Setup & Credentials Walkthrough
 
 ### Added
